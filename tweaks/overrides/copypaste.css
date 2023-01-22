@@ -1,0 +1,20 @@
+/*---Noxte Alters----*/
+.cta-dropdown-md-label.qa_reply {
+	display: none;
+}
+
+.cta-dropdown-md-arrow {
+	width: 2000px;
+	height: 100px;
+	background: #000;
+}
+
+.cta-button-sm {
+	width: 2000px;
+	height: 100px;
+	background: orange;
+}
+
+td.notice {
+display: none;
+}
