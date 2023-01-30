@@ -1,0 +1,15 @@
+/*!
+ * cache=false;cachewrite=true
+ * @license Licences are viewable at this URL: https://cdn1.gaiaonline.com/src/_/3/src/css/asyncalerts/base.css
+ */
+
+
+/*! /src/css/asyncalerts/base.css */
+.notifier {
+    z-index: 100;
+    margin: 0px 0px;
+    padding: 8px 8px;
+    border: 1px solid #f00;
+    background-color: #fc0;
+}
+    

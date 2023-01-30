@@ -1,0 +1,190 @@
+/*!
+ * cache=true
+ * @license Licences are viewable at this URL: https://cdn1.gaiaonline.com/src/=/3/src/js/asyncalerts/base.js
+ */
+
+
+/*! /src/js/asyncalerts/base.js */
+(function() {
+/*jslint continue: true, nomen: true, plusplus: true, sloppy: true, browser: true, indent: 4 */
+/*global YAHOO, YUI, GAIA_config */
+
+var async_cb = {
+    "onSuccess": function () {
+        YUI.add("async-alerts", function (Y) {
+            /**
+             * Constructor
+             */
+            Y.GAsyncAlerts = function () {
+                this.MAX_TIMES     = 10;
+                this.counter       = 0;
+                this.interval_secs = 12;
+                this.bNode         = undefined;
+                this.theAnim       = undefined;
+                this.animTimer     = undefined;
+            };
+
+            /**
+             * init
+             * initialize Notifier object
+             */
+            Y.GAsyncAlerts.prototype.init = function (w) {
+                var that = this,
+                    /**
+                     * call_refreshAsyncAlert
+                     * interval this function
+                     * detects if now is the right time to notify
+                     */
+                    call_refreshAsyncAlert = function () {
+                        // TODO: add some time interval decay here
+                        var cnt = ++that.counter,
+                            i;
+
+                        // this will implement a time decay, calling the AJAX req
+                        // a maximum of that.MAX_TIMES per page across 20 min span
+                        for (i = 1; i <= that.MAX_TIMES; i++) {
+                            if (cnt === i * i) {
+                                that.ajax_FetchNextAlert();
+                            }
+                        }
+                    };
+
+                // save window
+                this.main = w;
+                window.setInterval(call_refreshAsyncAlert, this.interval_secs * 1000);
+            };
+
+            /**
+             * destroy
+             * shutdown Notifier object
+             */
+            Y.GAsyncAlerts.prototype.destroy = function () {
+                Y.one(document.body).removeChild(this.bNode);
+            };
+
+            /**
+             * notify
+             * m = message (HTML)
+             * c = classname (string)
+             */
+            Y.GAsyncAlerts.prototype.notify = function (m) {
+                var w = this.main,
+                    that = this,
+                    // shortcut to document
+                    d = this.main.document,
+                    // canvas, window width and window height
+                    r = d.documentElement,
+                    ww = w.innerWidth ? w.innerWidth + w.pageXOffset : r.clientWidth + r.scrollLeft,
+                    wh = w.innerHeight ? w.innerHeight + w.pageYOffset : r.clientHeight + r.scrollTop,
+                    // create a block element
+                    bw,
+                    bh,
+                    myAnim;
+
+                if (!this.bNode) {
+                    this.bNode = Y.Node.create('<div id="Message" class="notify"></div>');
+                    this.bNode.setStyles({
+                        "display": "block",
+                        "opacity": "1.0",
+                        "position": "absolute",
+                        "margin": "0",
+                        "padding": "8px",
+                        "top": "-9999px",
+                        "left": "-9999px",
+                        "border": "1px solid #f00",
+                        "backgroundColor": "#fc0",
+                        "boxShadow": "2px 2px 4px rgba(0,0,0,0.25)",
+                        "whiteSpace": "nowrap"
+                    });
+                    // insert block in to body
+                    Y.one(d.body).appendChild(this.bNode);
+                }
+
+                // write HTML fragment to it.  if we do this while 
+                this.bNode.set("innerHTML", m);
+
+                // 
+                this.bNode.setStyles({
+                    "display": "block",
+                    "opacity": 1.0,
+                    "top": "-9999px",
+                    "left": "-9999px"
+                });
+
+                // save width/height before hiding
+                bw = this.bNode.get("offsetWidth");
+                bh = this.bNode.get("offsetHeight");
+
+                // hide, move and then show
+                this.bNode.setStyles({
+                    "top": ((wh - bh) / 2) + "px", // this is to place it to the bottom
+                    "left": ((ww - bw) * 0.85) + "px" // this is to place it to the right
+                });
+
+                // fadeout block if supported
+                this.theAnim = new Y.Anim({
+                    "node": this.bNode,
+                    "duration": 0.75,
+                    "from": {
+                        "opacity": 1.0
+                    },
+                    "to": {
+                        "opacity": 0.0
+                    }
+                });
+
+                // delay 2 seconds before running the animation
+                this.animTimer = window.setTimeout(function () {
+                    that.theAnim.run();
+                }, 2000);
+
+                // sunscribe this callback to remove the bNode post-animation
+                this.theAnim.on("end", function () {
+                    this.animTimer = window.clearTimeout(this.animTimer);
+                });
+            };
+
+            /**
+             * ajax_FetchNextAlert
+             */
+            Y.GAsyncAlerts.prototype.ajax_FetchNextAlert = function () {
+                var that = this;
+                Y.io("//" +  GAIA_config("main_server") + "/asyncalerts/", {
+                    "method": "get",
+                    "on": {
+                        "complete": function (id, o, args) {
+                            var message = "",
+                                jsonObj = {};
+                            try {
+                                if (o.responseText.length > 1) {
+                                    jsonObj = Y.JSON.parse(o.responseText);
+                                    if (jsonObj.data.message) {
+                                        that.notify(jsonObj.data.message);
+                                    }
+                                }
+                            } catch (err) {
+                                // console.log(err);
+                            }
+                        }
+                    }
+                });
+            };
+        }, "0.0.1", {
+            "requires": ["node", "node-style", "anim", "io-base", "json-parse"]
+        });
+
+        YUI().use(["async-alerts"], function (Y) {
+            var Notifier = new Y.GAsyncAlerts();
+
+            Notifier.init(window, "notifier");
+        });
+    }
+};
+
+if (typeof YUI === "undefined") {
+  YAHOO.util.Get.script("http://yui.yahooapis.com/3.9.0/build/yui/yui-min.js", async_cb);
+} else {
+  async_cb.onSuccess();
+}
+
+})();

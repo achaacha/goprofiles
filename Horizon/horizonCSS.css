@@ -289,7 +289,7 @@ Column 2 and 3
     height: 50px;
     width: 50px;
     z-index: 10;
-    background-image: url("info_about_me.svg");
+    background-image: url('https://achaacha.github.io/goprofiles/Horizon/info_about_me.svg');
     background-size: contain;
     background-repeat: no-repeat;
 }
@@ -375,7 +375,7 @@ Two Panels on C2/C3 to display
     max-width: 200px;
 }
 
-#id_about > span {
+#id_about span {
     display: block;
     font-family: 'Lato';
     padding-left: 35px;
